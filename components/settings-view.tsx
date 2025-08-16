@@ -1,14 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Brain, Shield, Bell, Zap, ThumbsUp, ThumbsDown, History, HelpCircle, LogOut, RefreshCw, AlertTriangle } from "lucide-react"
+import { Brain, Shield, Bell, Zap, ThumbsUp, ThumbsDown, History, HelpCircle, LogOut } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { useEmailStore, useAIStore } from "@/stores"
 
 export function SettingsView() {
   const { logout } = useAuth()
@@ -17,79 +16,38 @@ export function SettingsView() {
   const [autoCategories, setAutoCategories] = useState(true)
   const [proactiveReminders, setProactiveReminders] = useState(true)
 
-  // Import Zustand stores
-  const { 
-    userPreferences, 
-    isLoading: emailLoading, 
-    error: emailError, 
-    updateUserPreferences 
-  } = useEmailStore()
-
-  const { 
-    processingStats, 
-    isLoading: aiLoading, 
-    error: aiError, 
-    getProcessingStats 
-  } = useAIStore()
-
-  // Fetch data on component mount
-  useEffect(() => {
-    getProcessingStats()
-  }, [getProcessingStats])
-
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
       await logout()
     }
   }
 
-  // Transform API data to create decision history
-  const aiDecisionHistory = (processingStats?.recent_decisions || []).map((decision, index) => ({
-    id: decision.email_id || `decision-${index}`,
-    action: decision.action || "AI Decision",
-    email: decision.email_subject || "Email",
-    reasoning: decision.reasoning || "AI analysis",
-    timestamp: decision.timestamp || "Recently",
-    feedback: decision.feedback as "positive" | "negative" | null,
-  }))
-
-  const isLoading = emailLoading || aiLoading
-  const error = emailError || aiError
-
-  // Error handling with fallback UI
-  if (error) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <Card className="p-8 text-center max-w-md">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Failed to Load Settings</h3>
-            <p className="text-gray-600 mb-4">
-              {typeof error === 'string' ? error : "Unable to fetch settings data from the server. Please check your connection and try again."}
-            </p>
-            <Button onClick={() => getProcessingStats()} className="w-full">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Loading settings...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const aiDecisionHistory = [
+    {
+      id: "1",
+      action: 'Categorized as "Urgent"',
+      email: "Q4 Budget Review Meeting",
+      reasoning: "Contains time-sensitive meeting request with VIP sender",
+      timestamp: "2 hours ago",
+      feedback: "positive",
+    },
+    {
+      id: "2",
+      action: "Generated reply suggestion",
+      email: "Project Timeline Discussion",
+      reasoning: "Based on conversation history and professional tone preference",
+      timestamp: "4 hours ago",
+      feedback: null,
+    },
+    {
+      id: "3",
+      action: "Created reminder",
+      email: "Budget approval request",
+      reasoning: "No response received after 5 days, marked as follow-up needed",
+      timestamp: "1 day ago",
+      feedback: "positive",
+    },
+  ]
 
   return (
     <div className="flex-1 p-6">

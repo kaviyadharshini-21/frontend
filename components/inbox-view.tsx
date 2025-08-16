@@ -6,9 +6,8 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Reply, Calendar, CheckSquare, Clock, Archive, HelpCircle, Star, AlertCircle, User, RefreshCw, AlertTriangle, Mail } from "lucide-react"
+import { Reply, Calendar, CheckSquare, Clock, Archive, HelpCircle, Star, AlertCircle, User } from "lucide-react"
 import { MeetingRequestBanner } from "./meeting-request-banner"
-import { useEmailStore } from "@/stores"
 
 interface Email {
   id: string
@@ -34,22 +33,6 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
   const [isMobile, setIsMobile] = useState(false)
   const emailRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  // Import Zustand store
-  const { 
-    processedEmails, 
-    emailStats, 
-    isLoading, 
-    error, 
-    fetchEmails, 
-    getEmailStats 
-  } = useEmailStore()
-
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchEmails()
-    getEmailStats()
-  }, [fetchEmails, getEmailStats])
-
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -66,7 +49,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
         return
       }
 
-      const currentEmails = emails // Use transformed emails
+      const currentEmails = mockEmails // This would be filtered based on current tab
 
       switch (event.key) {
         case "ArrowDown":
@@ -94,7 +77,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
 
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [focusedEmailIndex, onThreadSelect, processedEmails])
+  }, [focusedEmailIndex, onThreadSelect])
 
   useEffect(() => {
     if (focusedEmailIndex >= 0 && emailRefs.current[focusedEmailIndex]) {
@@ -102,75 +85,55 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
     }
   }, [focusedEmailIndex])
 
-  // Transform API data to match component interface
-  const emails: Email[] = (processedEmails || []).map((email, index) => ({
-    id: email.email_id || `email-${index}`,
-    sender: email.classification?.sender_importance === "high" ? "VIP Contact" : "Unknown Sender",
-    subject: email.summary?.brief_summary || "No Subject",
-    summary: email.summary?.brief_summary || "No content available",
-    isVip: email.classification?.sender_importance === "high",
-    urgency: (email.classification?.urgency as "high" | "medium" | "low") || "medium",
-    hasAttachment: false, // Not available in API response
-    timestamp: new Date().toLocaleString(), // Not available in API response
-    category: (email.classification?.category as "urgent" | "respond" | "fyi" | "meeting") || "fyi",
-    hasMeetingRequest: email.intent?.primary_intent === "meeting_request",
-  }))
-
-  // Error handling with fallback UI
-  if (error) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <Card className="p-8 text-center max-w-md">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Failed to Load Emails</h3>
-            <p className="text-gray-600 mb-4">
-              {typeof error === 'string' ? error : "Unable to fetch emails from the server. Please check your connection and try again."}
-            </p>
-            <Button onClick={() => fetchEmails()} className="w-full">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  // Loading state
-  if (isLoading && (!processedEmails || processedEmails.length === 0)) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Loading emails...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Empty state
-  if (!isLoading && (!processedEmails || processedEmails.length === 0)) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <Card className="p-8 text-center max-w-md">
-            <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Emails Found</h3>
-            <p className="text-gray-600 mb-4">
-              Your inbox appears to be empty. New emails will appear here once they're processed.
-            </p>
-            <Button onClick={() => fetchEmails()} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </Card>
-        </div>
-      </div>
-    )
-  }
+  const mockEmails: Email[] = [
+    {
+      id: "1",
+      sender: "Sarah Johnson",
+      subject: "Q4 Budget Review Meeting",
+      summary: "Requesting your attendance for the quarterly budget review scheduled for next week.",
+      isVip: true,
+      urgency: "high",
+      hasAttachment: true,
+      timestamp: "2 hours ago",
+      category: "urgent",
+      hasMeetingRequest: true,
+    },
+    {
+      id: "2",
+      sender: "Marketing Team",
+      subject: "Campaign Performance Update",
+      summary: "Weekly performance metrics showing 15% increase in engagement rates.",
+      isVip: false,
+      urgency: "medium",
+      hasAttachment: false,
+      timestamp: "4 hours ago",
+      category: "fyi",
+    },
+    {
+      id: "3",
+      sender: "Alex Chen",
+      subject: "Project Timeline Discussion",
+      summary: "Need to discuss potential delays in the mobile app development timeline.",
+      isVip: false,
+      urgency: "high",
+      hasAttachment: false,
+      timestamp: "6 hours ago",
+      category: "respond",
+    },
+    {
+      id: "4",
+      sender: "David Wilson",
+      subject: "Weekly Team Standup",
+      summary:
+        "Let's schedule our weekly team standup for this Friday. I've prepared the agenda and would like to discuss the upcoming sprint.",
+      isVip: false,
+      urgency: "medium",
+      hasAttachment: false,
+      timestamp: "1 day ago",
+      category: "meeting",
+      hasMeetingRequest: true,
+    },
+  ]
 
   const getMeetingDetails = (emailId: string) => {
     const meetingDetailsMap: Record<string, any> = {
@@ -276,9 +239,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
 
     return (
       <Card
-                        ref={(el) => {
-                  emailRefs.current[index] = el
-                }}
+        ref={(el) => (emailRefs.current[index] = el)}
         className={`
           ${isMobile ? "p-3" : "p-4"} 
           transition-all duration-200 cursor-pointer focus-ring
@@ -487,7 +448,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
   }
 
   const filterEmailsByCategory = (category: string) => {
-    return emails.filter((email) => email.category === category)
+    return mockEmails.filter((email) => email.category === category)
   }
 
   return (

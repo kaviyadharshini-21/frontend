@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,9 +18,7 @@ import {
   Mail,
   Video,
   Phone,
-  RefreshCw,
 } from "lucide-react"
-import { useCalendarStore } from "@/stores"
 
 interface CalendarEvent {
   id: string
@@ -56,97 +54,60 @@ export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  // Import Zustand store
-  const { 
-    events, 
-    todayEvents, 
-    upcomingEvents, 
-    freeTimeSlots, 
-    isLoading, 
-    error, 
-    listEvents, 
-    getTodayEvents, 
-    getUpcomingEvents 
-  } = useCalendarStore()
+  const mockEvents: CalendarEvent[] = [
+    {
+      id: "1",
+      title: "Q4 Budget Review Meeting",
+      startTime: "14:00",
+      endTime: "15:30",
+      date: "2024-01-16",
+      type: "meeting",
+      participants: ["Sarah Johnson", "Mike Davis", "You"],
+      location: "Conference Room A",
+      description: "Quarterly budget review and resource allocation discussion",
+      status: "confirmed",
+      linkedEmailId: "email-1",
+      isAIGenerated: true,
+    },
+    {
+      id: "2",
+      title: "Client Presentation - Acme Corp",
+      startTime: "15:00",
+      endTime: "16:00",
+      date: "2024-01-17",
+      type: "meeting",
+      participants: ["Acme Corp Team", "You"],
+      location: "Virtual - Zoom",
+      status: "confirmed",
+    },
+    {
+      id: "3",
+      title: "Follow up: Marketing Campaign",
+      startTime: "10:00",
+      endTime: "10:30",
+      date: "2024-01-18",
+      type: "reminder",
+      status: "pending",
+      linkedEmailId: "email-2",
+    },
+  ]
 
-  // Fetch data on component mount
-  useEffect(() => {
-    listEvents()
-    getTodayEvents()
-    getUpcomingEvents()
-  }, [listEvents, getTodayEvents, getUpcomingEvents])
-
-  // Transform API data to match component interface
-  const calendarEvents: CalendarEvent[] = (events || []).map((event, index) => ({
-    id: event.id || `event-${index}`,
-    title: event.summary || "Untitled Event",
-    startTime: event.start_time ? new Date(event.start_time).toLocaleTimeString() : "Unknown",
-    endTime: event.end_time ? new Date(event.end_time).toLocaleTimeString() : "Unknown",
-    date: event.start_time ? new Date(event.start_time).toLocaleDateString() : "Unknown",
-    type: "meeting" as const,
-    participants: event.attendees || [],
-    location: event.location || undefined,
-    description: event.description || undefined,
-    status: event.status === "confirmed" ? "confirmed" : "pending",
-    linkedEmailId: undefined, // Not available in API response
-    isAIGenerated: false, // Not available in API response
-  }))
-
-  // Error handling with fallback UI
-  if (error) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <Card className="p-8 text-center max-w-md">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Failed to Load Calendar</h3>
-            <p className="text-gray-600 mb-4">
-              {typeof error === 'string' ? error : "Unable to fetch calendar events from the server. Please check your connection and try again."}
-            </p>
-            <Button onClick={() => listEvents()} className="w-full">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  // Loading state
-  if (isLoading && (!events || events.length === 0)) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Loading calendar events...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Empty state
-  if (!isLoading && (!events || events.length === 0)) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <Card className="p-8 text-center max-w-md">
-            <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Calendar Events</h3>
-            <p className="text-gray-600 mb-4">
-              Your calendar appears to be empty. New events will appear here once they're created.
-            </p>
-            <Button onClick={() => listEvents()} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </Card>
-        </div>
-      </div>
-    )
-  }
+  const mockMeetingRequests: MeetingRequest[] = [
+    {
+      id: "1",
+      emailId: "email-3",
+      sender: "Alex Chen",
+      subject: "Project Timeline Discussion",
+      detectedInfo: {
+        participants: ["Alex Chen", "Development Team", "You"],
+        suggestedTimes: ["Tomorrow 2:00 PM", "Thursday 10:00 AM", "Friday 3:00 PM"],
+        location: "Conference Room B",
+        agenda: "Discuss potential delays in mobile app development timeline",
+      },
+      conflicts: ["Conflicts with Budget Review Meeting"],
+      status: "pending",
+    },
+  ]
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear()
@@ -172,7 +133,7 @@ export function CalendarView() {
   }
 
   const getEventsForDate = (date: string) => {
-    return calendarEvents.filter((event) => event.date === date)
+    return mockEvents.filter((event) => event.date === date)
   }
 
   const formatDate = (year: number, month: number, day: number) => {
@@ -351,9 +312,7 @@ export function CalendarView() {
             <Mail className="w-4 h-4 mr-2" />
             Meeting Requests
             <Badge variant="secondary" className="ml-2">
-              {/* This badge will need to be updated to reflect actual meeting requests */}
-              {/* For now, it's a placeholder based on mock data */}
-              {calendarEvents.filter(event => event.type === "meeting").length}
+              {mockMeetingRequests.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="upcoming">
@@ -422,9 +381,7 @@ export function CalendarView() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium">{event.title}</span>
-                        {/* This badge will need to be updated to reflect actual AI generation */}
-                        {/* For now, it's a placeholder based on mock data */}
-                        {calendarEvents.find(e => e.id === event.id)?.isAIGenerated && (
+                        {event.isAIGenerated && (
                           <Badge variant="secondary" className="text-xs">
                             AI Generated
                           </Badge>
@@ -463,26 +420,11 @@ export function CalendarView() {
         </TabsContent>
 
         <TabsContent value="requests" className="mt-6 space-y-4">
-          {/* This section will need to be updated to use actual meeting requests */}
-          {/* For now, it's a placeholder based on mock data */}
-          {calendarEvents.filter(event => event.type === "meeting").map((event) => (
-            <MeetingRequestCard key={event.id} request={{
-              id: event.id,
-              emailId: "email-placeholder",
-              sender: "AI Assistant",
-              subject: event.title,
-              detectedInfo: {
-                participants: event.participants || [],
-                suggestedTimes: ["10:00 AM", "11:00 AM", "12:00 PM"],
-                location: event.location,
-                agenda: "Meeting agenda placeholder",
-              },
-              conflicts: ["Conflicts with existing meeting"],
-              status: "pending",
-            }} />
+          {mockMeetingRequests.map((request) => (
+            <MeetingRequestCard key={request.id} request={request} />
           ))}
 
-          {calendarEvents.filter(event => event.type === "meeting").length === 0 && (
+          {mockMeetingRequests.length === 0 && (
             <Card className="p-8 text-center">
               <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="font-semibold mb-2">No pending meeting requests</h3>
@@ -492,11 +434,11 @@ export function CalendarView() {
         </TabsContent>
 
         <TabsContent value="upcoming" className="mt-6">
-                      <div className="space-y-4">
-              {Object.entries(upcomingEvents?.events_by_day || {})
-                .flatMap(([date, events]) => events)
-                .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                .map((event) => (
+          <div className="space-y-4">
+            {mockEvents
+              .filter((event) => new Date(event.date) >= new Date())
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              .map((event) => (
                 <Card key={event.id} className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary/10 rounded-full">
@@ -504,44 +446,42 @@ export function CalendarView() {
                     </div>
 
                     <div className="flex-1">
-                                              <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold">{event.summary}</h3>
-                          {/* This badge will need to be updated to reflect actual AI generation */}
-                          {/* For now, it's a placeholder based on mock data */}
-                          {calendarEvents.find(e => e.id === event.id)?.isAIGenerated && <Badge variant="secondary">AI Generated</Badge>}
-                        </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold">{event.title}</h3>
+                        {event.isAIGenerated && <Badge variant="secondary">AI Generated</Badge>}
+                      </div>
 
-                        <div className="text-sm text-muted-foreground mb-2">
-                          {new Date(event.start_time).toLocaleDateString("en-US", {
-                            weekday: "long",
-                            month: "short",
-                            day: "numeric",
-                          })}{" "}
-                          • {new Date(event.start_time).toLocaleTimeString()} - {new Date(event.end_time).toLocaleTimeString()}
-                        </div>
+                      <div className="text-sm text-muted-foreground mb-2">
+                        {new Date(event.date).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "short",
+                          day: "numeric",
+                        })}{" "}
+                        • {event.startTime} - {event.endTime}
+                      </div>
 
-                        {event.description && <p className="text-sm mb-2">{event.description}</p>}
+                      {event.description && <p className="text-sm mb-2">{event.description}</p>}
 
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          {event.attendees && (
-                            <div className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              <span>{event.attendees.length} participants</span>
-                            </div>
-                          )}
-                          {event.location && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>{event.location}</span>
-                            </div>
-                          )}
-                          {event.link && (
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
-                              <span>View Event</span>
-                            </div>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        {event.participants && (
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{event.participants.length} participants</span>
+                          </div>
+                        )}
+                        {event.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>{event.location}</span>
+                          </div>
+                        )}
+                        {event.linkedEmailId && (
+                          <div className="flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            <span>Linked to email</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Card>

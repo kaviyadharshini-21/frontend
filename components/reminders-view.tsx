@@ -1,11 +1,7 @@
-"use client"
-
-import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, AlertTriangle, CheckSquare, Reply, Calendar, User, RefreshCw, Mail } from "lucide-react"
-import { useEmailStore, useCalendarStore } from "@/stores"
+import { Clock, AlertTriangle, CheckSquare, Reply, Calendar, User } from "lucide-react"
 
 interface Reminder {
   id: string
@@ -19,135 +15,36 @@ interface Reminder {
 }
 
 export function RemindersView() {
-  // Import Zustand stores
-  const { 
-    processedEmails, 
-    isLoading: emailLoading, 
-    error: emailError, 
-    fetchEmails 
-  } = useEmailStore()
-
-  const { 
-    todayEvents, 
-    isLoading: calendarLoading, 
-    error: calendarError, 
-    getTodayEvents 
-  } = useCalendarStore()
-
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchEmails()
-    getTodayEvents()
-  }, [fetchEmails, getTodayEvents])
-
-  // Transform API data to create reminders
-  const reminders: Reminder[] = []
-
-  // Add email-based reminders
-  if (processedEmails) {
-    processedEmails.forEach((email, index) => {
-      // Create overdue response reminders for high urgency emails
-      if (email.classification?.urgency === "high" && email.intent?.requires_response) {
-        reminders.push({
-          id: `email-${email.email_id || index}`,
-          type: "overdue" as const,
-          title: `Response needed: ${email.summary?.brief_summary || "Email"}`,
-          context: email.summary?.brief_summary || "No context available",
-          sender: email.classification?.sender_importance === "high" ? "VIP Contact" : "Unknown Sender",
-          urgency: email.classification?.urgency as "high" | "medium" | "low" || "medium",
-          daysOverdue: 1, // Placeholder
-          timestamp: "1 day overdue",
-        })
-      }
-
-      // Create follow-up reminders for medium urgency emails
-      if (email.classification?.urgency === "medium" && email.intent?.requires_response) {
-        reminders.push({
-          id: `followup-${email.email_id || index}`,
-          type: "follow-up" as const,
-          title: `Follow up: ${email.summary?.brief_summary || "Email"}`,
-          context: email.summary?.brief_summary || "No context available",
-          sender: email.classification?.sender_importance === "high" ? "VIP Contact" : "Unknown Sender",
-          urgency: email.classification?.urgency as "high" | "medium" | "low" || "medium",
-          timestamp: "5 days ago",
-        })
-      }
-    })
-  }
-
-  // Add calendar-based reminders
-  if (todayEvents?.events) {
-    todayEvents.events.forEach((event, index) => {
-      reminders.push({
-        id: `meeting-${event.id || index}`,
-        type: "meeting" as const,
-        title: `Meeting reminder: ${event.summary}`,
-        context: `Meeting scheduled for ${new Date(event.start_time).toLocaleTimeString()}`,
-        sender: "Calendar",
-        urgency: "high" as const,
-        timestamp: `Today at ${new Date(event.start_time).toLocaleTimeString()}`,
-      })
-    })
-  }
-
-  const isLoading = emailLoading || calendarLoading
-  const error = emailError || calendarError
-
-  // Error handling with fallback UI
-  if (error) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <Card className="p-8 text-center max-w-md">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Failed to Load Reminders</h3>
-            <p className="text-gray-600 mb-4">
-              {typeof error === 'string' ? error : "Unable to fetch reminders from the server. Please check your connection and try again."}
-            </p>
-            <Button onClick={() => { fetchEmails(); getTodayEvents(); }} className="w-full">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  // Loading state
-  if (isLoading && reminders.length === 0) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Loading reminders...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Empty state
-  if (!isLoading && reminders.length === 0) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-full">
-          <Card className="p-8 text-center max-w-md">
-            <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Reminders</h3>
-            <p className="text-gray-600 mb-4">
-              You're all caught up! No overdue responses or upcoming meetings that need attention.
-            </p>
-            <Button onClick={() => { fetchEmails(); getTodayEvents(); }} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </Card>
-        </div>
-      </div>
-    )
-  }
+  const mockReminders: Reminder[] = [
+    {
+      id: "1",
+      type: "overdue",
+      title: "Response needed: Project Timeline Discussion",
+      context: "Alex Chen is waiting for your input on potential delays in mobile app development.",
+      sender: "Alex Chen",
+      urgency: "high",
+      daysOverdue: 2,
+      timestamp: "2 days overdue",
+    },
+    {
+      id: "2",
+      type: "follow-up",
+      title: "Follow up: Budget approval request",
+      context: "You requested budget approval for Q4 marketing campaigns. No response yet.",
+      sender: "Finance Team",
+      urgency: "medium",
+      timestamp: "5 days ago",
+    },
+    {
+      id: "3",
+      type: "meeting",
+      title: "Meeting reminder: Client presentation",
+      context: "Presentation scheduled for tomorrow at 3 PM with Acme Corp.",
+      sender: "Calendar",
+      urgency: "high",
+      timestamp: "Tomorrow at 3 PM",
+    },
+  ]
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -197,7 +94,7 @@ export function RemindersView() {
         </div>
 
         <div className="space-y-4">
-          {reminders.map((reminder) => {
+          {mockReminders.map((reminder) => {
             const TypeIcon = getTypeIcon(reminder.type)
 
             return (
@@ -252,7 +149,7 @@ export function RemindersView() {
           })}
         </div>
 
-        {reminders.length === 0 && (
+        {mockReminders.length === 0 && (
           <Card className="p-8 text-center">
             <CheckSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold mb-2">All caught up!</h3>
