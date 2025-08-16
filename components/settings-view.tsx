@@ -7,10 +7,10 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Brain, Shield, Bell, Zap, ThumbsUp, ThumbsDown, History, HelpCircle, LogOut } from "lucide-react"
-import { useAuth } from "@/lib/auth-context"
+import { useAuthStore } from "@/stores/authStore"
 
 export function SettingsView() {
-  const { logout } = useAuth()
+  const { logout } = useAuthStore()
   const [aiEnabled, setAiEnabled] = useState(true)
   const [smartSummaries, setSmartSummaries] = useState(true)
   const [autoCategories, setAutoCategories] = useState(true)
@@ -18,7 +18,7 @@ export function SettingsView() {
 
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
-      await logout()
+      logout()
     }
   }
 

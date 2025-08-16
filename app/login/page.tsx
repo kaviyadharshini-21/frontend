@@ -18,17 +18,9 @@ export default function LoginPage() {
     }
   }, [user, loading, router, isRedirecting]);
 
-  const handleLoginSuccess = (token: string, userData: any) => {
-    console.log("Login success called with:", { token: !!token, userData });
-
+  const handleLoginSuccess = () => {
     setIsRedirecting(true);
-
-    console.log("About to redirect to dashboard");
-
-    // Small delay to ensure state is updated before redirect
-    setTimeout(() => {
-      router.replace("/dashboard/email");
-    }, 100);
+    router.replace("/dashboard/email");
   };
 
   // Show loading during auth check or redirection

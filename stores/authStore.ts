@@ -30,8 +30,10 @@ export const useAuthStore = create<AuthState>()(
       signup: async (data) => {
         set({ loading: true, error: null });
         try {
-          await axiosInstance.post("/auth/signup", data);
+          const res = await axiosInstance.post("/auth/signup", data);
           set({ error: null });
+          // After successful signup, automatically log in the user
+          await get().login(data.email, data.password);
         } catch (err: any) {
           set({ error: err.response?.data?.detail || "Signup failed" });
         } finally {
@@ -49,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
           const token = res.data.access_token;
           localStorage.setItem("token", token);
           set({ token, error: null });
+          // Get user profile after successful login
           await get().getProfile();
         } catch (err: any) {
           set({ error: err.response?.data?.detail || "Login failed" });
@@ -64,11 +67,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       getProfile: async () => {
-        if (!localStorage.getItem("token")) return;
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        
         try {
           const res = await axiosInstance.get("/auth/profile");
           set({ user: res.data, error: null });
-        } catch {
+        } catch (err) {
           set({ user: null, token: null });
           localStorage.removeItem("token");
         }

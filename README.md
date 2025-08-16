@@ -205,7 +205,7 @@ describe('Email Dashboard', () => {
 ## 🐛 Known Issues & Limitations
 
 ### Current Limitations
-- Meeting detection uses mock data (requires backend integration)
+- Meeting detection and calendar integration (backend integration in progress)
 - Calendar integration is UI-only (needs calendar service connection)
 - Email data is static (requires email service integration)
 

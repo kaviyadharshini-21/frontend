@@ -21,7 +21,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
-  const { login, loading, error, clearError } = useAuthStore();
+  const { login, loading, error, clearError, user } = useAuthStore();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -54,11 +54,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       await login(formData.email, formData.password);
       setSuccess("Login successful! Redirecting...");
 
-      if (onSuccess) {
+      if (onSuccess && user) {
         const token = localStorage.getItem("token");
-        const user = localStorage.getItem("user");
-        if (token && user) {
-          onSuccess(token, JSON.parse(user));
+        if (token) {
+          onSuccess(token, user);
         }
       }
     } catch (err) {

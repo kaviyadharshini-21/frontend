@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Avatar } from "@/components/ui/avatar"
-import { useAuth } from "@/lib/auth-context"
+import { useAuthStore } from "@/stores/authStore"
 import { User, Edit3, Save, X, Mail, Calendar, Settings } from "lucide-react"
 
 interface UserProfile {
@@ -17,7 +17,7 @@ interface UserProfile {
 }
 
 export function ProfileView() {
-  const { user, token, login } = useAuth()
+  const { user, token } = useAuthStore()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -102,11 +102,6 @@ export function ProfileView() {
 
       // Update profile state
       setProfile(data.user)
-      
-      // Update auth context with new user data
-      if (user && token) {
-        login(token, data.user)
-      }
 
       setSuccess("Profile updated successfully!")
       setIsEditing(false)
