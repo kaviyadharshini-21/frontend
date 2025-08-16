@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
-import { Button } from "@/components/ui/button"
-import { LogOut, User } from "lucide-react"
-import Link from "next/link"
+import { Button } from "@/components/ui/button";
+import { LogOut, User } from "lucide-react";
+import Link from "next/link";
+import { useAuthStore } from "@/stores/authStore";
 
 export function AuthNav() {
-  const { user, logout, isLoading } = useAuth()
+  const { user, logout, loading } = useAuthStore();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
         <div className="w-20 h-4 bg-gray-200 rounded animate-pulse" />
       </div>
-    )
+    );
   }
 
   if (user) {
@@ -24,7 +24,7 @@ export function AuthNav() {
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="text-sm font-medium">{user.fullName}</span>
+          <span className="text-sm font-medium">{user.name}</span>
         </div>
         <Button
           variant="outline"
@@ -36,7 +36,7 @@ export function AuthNav() {
           Logout
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -48,6 +48,5 @@ export function AuthNav() {
         <Link href="/signup">Sign Up</Link>
       </Button>
     </div>
-  )
+  );
 }
-

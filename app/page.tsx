@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import { EmailDashboard } from "@/components/email-dashboard"
-import { useAuth } from "@/lib/auth-context"
-import { AuthNav } from "@/components/auth/auth-nav"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Mail, Shield, Users, Zap } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { EmailDashboard } from "@/components/email-dashboard";
+import { useAuthStore } from "@/stores/authStore";
+import { AuthNav } from "@/components/auth/auth-nav";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Mail, Shield, Users, Zap } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
+  const { user, loading } = useAuthStore();
+  const router = useRouter();
 
   useEffect(() => {
     // Redirect authenticated users to the email dashboard
-    if (!isLoading && user) {
-      router.push('/dashboard/email')
+    if (!loading && user) {
+      router.push("/dashboard/email");
     }
-  }, [user, isLoading, router])
+  }, [user, loading, router]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </main>
-    )
+    );
   }
 
   if (user) {
@@ -34,7 +34,7 @@ export default function Home() {
       <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </main>
-    )
+    );
   }
 
   // Landing page for non-authenticated users
@@ -58,8 +58,9 @@ export default function Home() {
             AI-Powered Email Management
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Transform your inbox with intelligent organization, automatic meeting detection, 
-            and seamless calendar integration. Stay focused on what matters most.
+            Transform your inbox with intelligent organization, automatic
+            meeting detection, and seamless calendar integration. Stay focused
+            on what matters most.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Button size="lg" asChild>
@@ -75,7 +76,9 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Our Platform?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Why Choose Our Platform?
+          </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-6 text-center">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -83,7 +86,8 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Smart Organization</h3>
               <p className="text-gray-600">
-                AI automatically categorizes your emails into Urgent, To Respond, and FYI sections
+                AI automatically categorizes your emails into Urgent, To
+                Respond, and FYI sections
               </p>
             </Card>
 
@@ -93,7 +97,8 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Meeting Detection</h3>
               <p className="text-gray-600">
-                Automatically detect meeting requests and schedule them with conflict detection
+                Automatically detect meeting requests and schedule them with
+                conflict detection
               </p>
             </Card>
 
@@ -103,7 +108,8 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Secure & Private</h3>
               <p className="text-gray-600">
-                Enterprise-grade security with encrypted data and secure authentication
+                Enterprise-grade security with encrypted data and secure
+                authentication
               </p>
             </Card>
           </div>
@@ -117,5 +123,5 @@ export default function Home() {
         </div>
       </footer>
     </main>
-  )
+  );
 }
