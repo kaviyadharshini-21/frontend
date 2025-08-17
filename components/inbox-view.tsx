@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import {
   Mail,
   Clock,
@@ -21,170 +21,201 @@ import {
   Trash2,
   Reply,
   Forward,
-} from "lucide-react"
-import { useEmailStore } from "@/stores/emailStore"
-import type { Email } from "@/types"
+} from "lucide-react";
+import { useEmailStore } from "@/stores/emailStore";
+import type { Email } from "@/types";
 
 interface InboxViewProps {
-  onThreadSelect: (threadId: string) => void
+  onThreadSelect: (threadId: string) => void;
 }
 
 export function InboxView({ onThreadSelect }: InboxViewProps) {
-  const { inbox, loading, error, fetchInbox } = useEmailStore()
-  const [activeTab, setActiveTab] = useState("all")
-  const [focusedEmailIndex, setFocusedEmailIndex] = useState(-1)
-  const [searchQuery, setSearchQuery] = useState("")
-  const emailRefs = useRef<(HTMLDivElement | null)[]>([])
+  const { inbox, loading, error, fetchInbox } = useEmailStore();
+  const [activeTab, setActiveTab] = useState("all");
+  const [focusedEmailIndex, setFocusedEmailIndex] = useState(-1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const emailRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Fetch emails on component mount
   useEffect(() => {
-    fetchInbox()
-  }, [fetchInbox])
+    const abortController = new AbortController();
+
+    // Only fetch if not already loading
+    if (!loading) {
+      fetchInbox();
+    }
+
+    // Cleanup function to cancel any ongoing requests
+    return () => {
+      abortController.abort();
+    };
+  }, []); // Empty dependency array since fetchInbox is stable from Zustand
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
-        e.preventDefault()
+        e.preventDefault();
         setFocusedEmailIndex((prev) =>
           prev < inbox.length - 1 ? prev + 1 : prev
-        )
+        );
       } else if (e.key === "ArrowUp") {
-        e.preventDefault()
-        setFocusedEmailIndex((prev) => (prev > 0 ? prev - 1 : prev))
+        e.preventDefault();
+        setFocusedEmailIndex((prev) => (prev > 0 ? prev - 1 : prev));
       } else if (e.key === "Enter" && focusedEmailIndex >= 0) {
-        e.preventDefault()
-        const email = inbox[focusedEmailIndex]
+        e.preventDefault();
+        const email = inbox[focusedEmailIndex];
         if (email) {
-          onThreadSelect(email.threadId)
+          onThreadSelect(email.threadId);
         }
       }
     },
     [focusedEmailIndex, inbox, onThreadSelect]
-  )
+  );
 
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [handleKeyDown])
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     if (focusedEmailIndex >= 0 && emailRefs.current[focusedEmailIndex]) {
-      emailRefs.current[focusedEmailIndex]?.focus()
+      emailRefs.current[focusedEmailIndex]?.focus();
     }
-  }, [focusedEmailIndex])
+  }, [focusedEmailIndex]);
 
   // Helper function to determine email category based on content
   const getEmailCategory = (email: Email) => {
-    const subject = email.subject.toLowerCase()
-    const body = email.body.toLowerCase()
-    
-    if (subject.includes("urgent") || subject.includes("asap") || body.includes("urgent")) {
-      return "urgent"
+    const subject = email.subject.toLowerCase();
+    const body = email.body.toLowerCase();
+
+    if (
+      subject.includes("urgent") ||
+      subject.includes("asap") ||
+      body.includes("urgent")
+    ) {
+      return "urgent";
     }
-    if (subject.includes("meeting") || body.includes("meeting") || body.includes("schedule")) {
-      return "meeting"
+    if (
+      subject.includes("meeting") ||
+      body.includes("meeting") ||
+      body.includes("schedule")
+    ) {
+      return "meeting";
     }
-    if (subject.includes("response") || body.includes("please respond") || body.includes("let me know")) {
-      return "respond"
+    if (
+      subject.includes("response") ||
+      body.includes("please respond") ||
+      body.includes("let me know")
+    ) {
+      return "respond";
     }
-    return "fyi"
-  }
+    return "fyi";
+  };
 
   // Helper function to determine urgency
   const getEmailUrgency = (email: Email) => {
-    const subject = email.subject.toLowerCase()
-    const body = email.body.toLowerCase()
-    
-    if (subject.includes("urgent") || subject.includes("asap") || body.includes("urgent")) {
-      return "high"
+    const subject = email.subject.toLowerCase();
+    const body = email.body.toLowerCase();
+
+    if (
+      subject.includes("urgent") ||
+      subject.includes("asap") ||
+      body.includes("urgent")
+    ) {
+      return "high";
     }
     if (subject.includes("important") || body.includes("important")) {
-      return "medium"
+      return "medium";
     }
-    return "low"
-  }
+    return "low";
+  };
 
   // Helper function to check if email has meeting request
   const hasMeetingRequest = (email: Email) => {
-    const subject = email.subject.toLowerCase()
-    const body = email.body.toLowerCase()
-    return subject.includes("meeting") || body.includes("meeting") || body.includes("schedule")
-  }
+    const subject = email.subject.toLowerCase();
+    const body = email.body.toLowerCase();
+    return (
+      subject.includes("meeting") ||
+      body.includes("meeting") ||
+      body.includes("schedule")
+    );
+  };
 
   // Helper function to format timestamp
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
     if (diffInHours < 1) {
-      return "Just now"
+      return "Just now";
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)} hours ago`
+      return `${Math.floor(diffInHours)} hours ago`;
     } else {
-      return `${Math.floor(diffInHours / 24)} days ago`
+      return `${Math.floor(diffInHours / 24)} days ago`;
     }
-  }
+  };
 
   // Filter emails based on active tab and search query
   const filteredEmails = inbox.filter((email) => {
-    const matchesSearch = searchQuery === "" || 
+    const matchesSearch =
+      searchQuery === "" ||
       email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      email.from.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const category = getEmailCategory(email)
-    
-    if (activeTab === "all") return matchesSearch
-    if (activeTab === "urgent") return matchesSearch && category === "urgent"
-    if (activeTab === "respond") return matchesSearch && category === "respond"
-    if (activeTab === "fyi") return matchesSearch && category === "fyi"
-    if (activeTab === "meeting") return matchesSearch && category === "meeting"
-    
-    return matchesSearch
-  })
+      email.from.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const category = getEmailCategory(email);
+
+    if (activeTab === "all") return matchesSearch;
+    if (activeTab === "urgent") return matchesSearch && category === "urgent";
+    if (activeTab === "respond") return matchesSearch && category === "respond";
+    if (activeTab === "fyi") return matchesSearch && category === "fyi";
+    if (activeTab === "meeting") return matchesSearch && category === "meeting";
+
+    return matchesSearch;
+  });
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
       case "high":
-        return "border-red-200 bg-red-50"
+        return "border-red-200 bg-red-50";
       case "medium":
-        return "border-yellow-200 bg-yellow-50"
+        return "border-yellow-200 bg-yellow-50";
       case "low":
-        return "border-green-200 bg-green-50"
+        return "border-green-200 bg-green-50";
       default:
-        return "border-border bg-card"
+        return "border-border bg-card";
     }
-  }
+  };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "urgent":
-        return AlertTriangle
+        return AlertTriangle;
       case "respond":
-        return Reply
+        return Reply;
       case "fyi":
-        return Mail
+        return Mail;
       case "meeting":
-        return Calendar
+        return Calendar;
       default:
-        return Mail
+        return Mail;
     }
-  }
+  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "urgent":
-        return "text-red-500"
+        return "text-red-500";
       case "respond":
-        return "text-blue-500"
+        return "text-blue-500";
       case "fyi":
-        return "text-green-500"
+        return "text-green-500";
       case "meeting":
-        return "text-purple-500"
+        return "text-purple-500";
       default:
-        return "text-muted-foreground"
+        return "text-muted-foreground";
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -193,7 +224,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -204,7 +235,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
           <Button onClick={fetchInbox}>Retry</Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -246,14 +277,16 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
       <div className="flex-1 overflow-y-auto">
         {filteredEmails.length === 0 ? (
           <div className="p-6 text-center text-muted-foreground">
-            {searchQuery ? "No emails found matching your search." : "No emails in this category."}
+            {searchQuery
+              ? "No emails found matching your search."
+              : "No emails in this category."}
           </div>
         ) : (
           <div className="divide-y divide-border">
             {filteredEmails.map((email, index) => {
-              const category = getEmailCategory(email)
-              const urgency = getEmailUrgency(email)
-              const CategoryIcon = getCategoryIcon(category)
+              const category = getEmailCategory(email);
+              const urgency = getEmailUrgency(email);
+              const CategoryIcon = getCategoryIcon(category);
               return (
                 <div
                   key={email.id}
@@ -308,7 +341,8 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
                         {email.attachments.length > 0 && (
                           <span className="flex items-center gap-1">
                             <Paperclip className="w-3 h-3" />
-                            {email.attachments.length} attachment{email.attachments.length > 1 ? 's' : ''}
+                            {email.attachments.length} attachment
+                            {email.attachments.length > 1 ? "s" : ""}
                           </span>
                         )}
                         {hasMeetingRequest(email) && (
@@ -325,11 +359,11 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
                     </div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

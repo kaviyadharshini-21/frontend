@@ -28,13 +28,16 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       signup: async (data) => {
+        console.log("Signup called with:", data);
         set({ loading: true, error: null });
         try {
           const res = await axiosInstance.post("/auth/signup", data);
+          console.log("Signup response:", res.data);
           set({ error: null });
           // After successful signup, automatically log in the user
           await get().login(data.email, data.password);
         } catch (err: any) {
+          console.error("Signup error:", err);
           set({ error: err.response?.data?.detail || "Signup failed" });
         } finally {
           set({ loading: false });
@@ -42,18 +45,24 @@ export const useAuthStore = create<AuthState>()(
       },
 
       login: async (email, password) => {
+        console.log("Login called with:", { email, password });
         set({ loading: true, error: null });
         try {
           const res = await axiosInstance.post("/auth/login", {
             email,
             password,
           });
+          console.log("Login response:", res.data);
+
           const token = res.data.access_token;
           localStorage.setItem("token", token);
+
           set({ token, error: null });
+
           // Get user profile after successful login
           await get().getProfile();
         } catch (err: any) {
+          console.error("Login error:", err);
           set({ error: err.response?.data?.detail || "Login failed" });
         } finally {
           set({ loading: false });
@@ -61,6 +70,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        console.log("Logout called");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         set({ user: null, token: null, error: null });
@@ -68,12 +78,15 @@ export const useAuthStore = create<AuthState>()(
 
       getProfile: async () => {
         const token = localStorage.getItem("token");
+        console.log("GetProfile called, token:", token);
         if (!token) return;
-        
+
         try {
           const res = await axiosInstance.get("/auth/profile");
+          console.log("Profile response:", res.data);
           set({ user: res.data, error: null });
-        } catch (err) {
+        } catch (err: any) {
+          console.error("GetProfile error:", err);
           set({ user: null, token: null });
           localStorage.removeItem("token");
         }

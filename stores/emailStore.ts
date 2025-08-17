@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import axiosInstance from "@/lib/axiosInstance";
 import type { Email, Thread } from "@/types";
+import { Inbox } from "lucide-react";
 
 type EmailState = {
   inbox: Email[];
   selectedThread: Thread | null;
   loading: boolean;
   error: string | null;
+  isFetching: boolean; // Add flag to prevent multiple simultaneous calls
   fetchInbox: () => Promise<void>;
   fetchThread: (threadId: string) => Promise<void>;
   sendEmail: (emailData: Partial<Email>) => Promise<void>;
@@ -20,59 +22,30 @@ export const useEmailStore = create<EmailState>((set, get) => ({
   selectedThread: null,
   loading: false,
   error: null,
+  isFetching: false,
 
   fetchInbox: async () => {
-    set({ loading: true, error: null });
+    // Prevent multiple simultaneous calls
+    if (get().isFetching) {
+      return;
+    }
+
+    set({ loading: true, error: null, isFetching: true });
+    if (get().inbox.length > 0) {
+      set({ loading: false, isFetching: false });
+      return;
+    }
     try {
       // Using the correct endpoint from API documentation
-      const res = await axiosInstance.get("/emails/fetch?count=50&enable_ai=true");
-      // The API returns a message about fetching, but we need to get the actual emails
-      // For now, we'll use a mock response until the backend is properly set up
-      set({ 
-        inbox: [
-          {
-            id: "1",
-            from: "sarah@company.com",
-            to: ["user@company.com"],
-            subject: "Q4 Budget Review Meeting",
-            body: "Hi team, I hope this email finds you well. I wanted to reach out regarding our upcoming Q4 budget review meeting. We need to discuss the allocated resources for the next quarter and review our current spending patterns.\n\nCould we schedule this for next Tuesday at 2 PM? Please let me know if this works for everyone.",
-            threadId: "thread-1",
-            isRead: false,
-            isDeleted: false,
-            sentAt: "2024-01-15T10:00:00Z",
-            attachments: [],
-          },
-          {
-            id: "2",
-            from: "marketing@company.com",
-            to: ["user@company.com"],
-            subject: "Campaign Performance Update",
-            body: "Weekly performance metrics showing 15% increase in engagement rates.",
-            threadId: "thread-2",
-            isRead: true,
-            isDeleted: false,
-            sentAt: "2024-01-15T08:00:00Z",
-            attachments: [],
-          },
-          {
-            id: "3",
-            from: "alex@company.com",
-            to: ["user@company.com"],
-            subject: "Project Timeline Discussion",
-            body: "Need to discuss potential delays in the mobile app development timeline.",
-            threadId: "thread-3",
-            isRead: false,
-            isDeleted: false,
-            sentAt: "2024-01-14T16:00:00Z",
-            attachments: [],
-          },
-        ], 
-        error: null 
-      });
+      const res = await axiosInstance.get(
+        "/emails/fetch?count=50&enable_ai=true"
+      );
+      set({ inbox: res.data.emails });
     } catch (err: any) {
+      console.log(err);
       set({ error: err.response?.data?.detail || "Failed to fetch inbox" });
     } finally {
-      set({ loading: false });
+      set({ loading: false, isFetching: false });
     }
   },
 
@@ -82,7 +55,11 @@ export const useEmailStore = create<EmailState>((set, get) => ({
       // For now, we'll create a mock thread response
       const mockThread: Thread = {
         id: threadId,
-        participants: ["sarah@company.com", "user@company.com", "mike@company.com"],
+        participants: [
+          "sarah@company.com",
+          "user@company.com",
+          "mike@company.com",
+        ],
         emails: ["1", "2"],
         lastUpdated: "2024-01-15T10:00:00Z",
       };

@@ -32,13 +32,6 @@ export type Reminder = {
   id: string;
   userId: string;
   emailId: string;
-  type: "overdue" | "follow-up" | "meeting";
-  title: string;
-  context: string;
-  sender?: string;
-  urgency: "high" | "medium" | "low";
-  daysOverdue?: number;
-  timestamp: string;
   remindAt: string;
   createdAt: string;
 };
@@ -52,6 +45,7 @@ export type Meeting = {
   startTime: string;
   endTime: string;
   status: "scheduled" | "completed" | "cancelled";
+  location?: string;
 };
 
 export type Settings = {

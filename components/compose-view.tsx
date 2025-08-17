@@ -1,50 +1,94 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Send, Paperclip, Smile, Bold, Italic, Link, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowLeft,
+  Send,
+  Paperclip,
+  Smile,
+  Bold,
+  Italic,
+  Link,
+  ThumbsUp,
+  ThumbsDown,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
+import axiosInstance from "@/lib/axiosInstance";
 
 interface ComposeViewProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
 export function ComposeView({ onBack }: ComposeViewProps) {
-  const [to, setTo] = useState("")
-  const [subject, setSubject] = useState("")
-  const [message, setMessage] = useState("")
-  const [tone, setTone] = useState("professional")
-  const [length, setLength] = useState("medium")
-  const [showAISuggestion, setShowAISuggestion] = useState(false)
+  const [to, setTo] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [context, setContext] = useState("");
+  const [tone, setTone] = useState("professional");
+  const [length, setLength] = useState("medium");
+  const [showAISuggestion, setShowAISuggestion] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiGeneratedMessage, setAiGeneratedMessage] = useState("");
+  const [aiError, setAiError] = useState("");
 
-  const aiSuggestion = `Hi Sarah,
+  const handleAIAssist = async () => {
+    if (!context.trim()) {
+      setAiError("Please provide context for the email");
+      return;
+    }
 
-Thank you for reaching out about the Q4 budget review meeting. I appreciate you taking the initiative to organize this important discussion.
+    setIsGenerating(true);
+    setAiError("");
+    setShowAISuggestion(false);
 
-Tuesday at 2 PM works perfectly for my schedule. I'll prepare the following materials for our review:
-- Current budget analysis with variance reports
-- Spending pattern breakdown by department
-- Resource allocation recommendations for Q4
+    try {
+      const response = await axiosInstance.post("/emails/compose", {
+        context: context.trim(),
+        tone,
+        length,
+        recipient: to,
+        subject:
+          subject || "Email regarding " + context.substring(0, 50) + "...",
+      });
 
-I believe this meeting will be crucial for ensuring we stay on track with our financial goals. Please let me know if there are any specific areas you'd like me to focus on in my preparation.
-
-Looking forward to our productive discussion.
-
-Best regards,
-[Your name]`
-
-  const handleAIAssist = () => {
-    setShowAISuggestion(true)
-  }
+      if (response.data.success && response.data.email?.content) {
+        setAiGeneratedMessage(response.data.email.content);
+        setShowAISuggestion(true);
+      } else {
+        throw new Error("No email content received from API");
+      }
+    } catch (error) {
+      console.error("AI email generation failed:", error);
+      setAiError(
+        error instanceof Error ? error.message : "Failed to generate email"
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleUseSuggestion = () => {
-    setMessage(aiSuggestion)
-    setShowAISuggestion(false)
-  }
+    setMessage(aiGeneratedMessage);
+    setShowAISuggestion(false);
+  };
+
+  const handleGenerateAnother = () => {
+    setShowAISuggestion(false);
+    setAiGeneratedMessage("");
+  };
 
   return (
     <div className="flex-1 flex flex-col">
@@ -75,24 +119,51 @@ Best regards,
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 block">To</label>
-              <Input placeholder="Enter email addresses..." value={to} onChange={(e) => setTo(e.target.value)} />
+              <Input
+                placeholder="Enter email addresses..."
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
             </div>
 
             <div>
               <label className="text-sm font-medium mb-2 block">Subject</label>
-              <Input placeholder="Enter subject..." value={subject} onChange={(e) => setSubject(e.target.value)} />
+              <Input
+                placeholder="Enter subject..."
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
             </div>
           </div>
 
           {/* AI Controls */}
           <Card className="p-4 bg-accent/10">
-            <div className="flex items-center gap-4 mb-4">
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
                 <span className="font-medium">AI Writing Assistant</span>
               </div>
 
-              <div className="flex gap-4 ml-auto">
+              {/* Context Input */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Email Context *
+                </label>
+                <Textarea
+                  placeholder="Describe what you want to communicate, the purpose of the email, key points to include, etc..."
+                  value={context}
+                  onChange={(e) => setContext(e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Provide clear context to help AI generate a relevant email
+                  draft
+                </p>
+              </div>
+
+              {/* Tone and Length Controls */}
+              <div className="flex gap-4">
                 <div className="flex items-center gap-2">
                   <label className="text-sm">Tone:</label>
                   <Select value={tone} onValueChange={setTone}>
@@ -104,6 +175,8 @@ Best regards,
                       <SelectItem value="casual">Casual</SelectItem>
                       <SelectItem value="friendly">Friendly</SelectItem>
                       <SelectItem value="formal">Formal</SelectItem>
+                      <SelectItem value="persuasive">Persuasive</SelectItem>
+                      <SelectItem value="empathetic">Empathetic</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -122,29 +195,56 @@ Best regards,
                   </Select>
                 </div>
               </div>
-            </div>
 
-            <Button onClick={handleAIAssist} variant="outline" size="sm">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate AI Draft
-            </Button>
+              {/* Generate Button */}
+              <Button
+                onClick={handleAIAssist}
+                variant="outline"
+                size="sm"
+                disabled={isGenerating || !context.trim()}
+                className="w-full sm:w-auto"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate AI Draft
+                  </>
+                )}
+              </Button>
+
+              {/* Error Display */}
+              {aiError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700">{aiError}</p>
+                </div>
+              )}
+            </div>
           </Card>
 
           {/* AI Suggestion */}
-          {showAISuggestion && (
+          {showAISuggestion && aiGeneratedMessage && (
             <Card className="p-4 border-primary/20 bg-primary/5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-xs text-primary-foreground font-bold">AI</span>
+                  <span className="text-xs text-primary-foreground font-bold">
+                    AI
+                  </span>
                 </div>
                 <span className="font-medium">AI Generated Draft</span>
                 <Badge variant="secondary" className="ml-auto">
-                  92% confidence
+                  AI Generated
                 </Badge>
               </div>
 
               <div className="bg-background p-4 rounded-md border mb-4">
-                <pre className="whitespace-pre-wrap text-sm font-sans">{aiSuggestion}</pre>
+                <pre className="whitespace-pre-wrap text-sm font-sans">
+                  {aiGeneratedMessage}
+                </pre>
               </div>
 
               <div className="flex items-center gap-2">
@@ -154,7 +254,11 @@ Best regards,
                 <Button size="sm" variant="outline">
                   Edit & Use
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleGenerateAnother}
+                >
                   Generate Another
                 </Button>
 
@@ -203,13 +307,14 @@ Best regards,
             <Card className="p-4 bg-muted/50">
               <h4 className="font-medium mb-2">Conversation Context</h4>
               <p className="text-sm text-muted-foreground">
-                Based on your recent conversations with {to}, AI suggests a professional tone with focus on project
-                updates and meeting coordination.
+                Based on your recent conversations with {to}, AI suggests a
+                professional tone with focus on project updates and meeting
+                coordination.
               </p>
             </Card>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

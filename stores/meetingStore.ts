@@ -2,6 +2,46 @@ import { create } from "zustand";
 import axiosInstance from "@/lib/axiosInstance";
 import type { Meeting } from "@/types";
 
+// Mock data for development
+const mockMeetings: Meeting[] = [
+  {
+    id: "1",
+    organizerId: "user-1",
+    participants: ["user-1", "user-2"],
+    title: "Team Standup",
+    description: "Daily team standup meeting",
+    startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+    endTime: new Date(
+      Date.now() + 24 * 60 * 60 * 1000 + 30 * 60 * 1000
+    ).toISOString(), // Tomorrow + 30 min
+    status: "scheduled",
+  },
+  {
+    id: "2",
+    organizerId: "user-1",
+    participants: ["user-1", "user-3", "user-4"],
+    title: "Project Review",
+    description: "Monthly project review meeting",
+    startTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Day after tomorrow
+    endTime: new Date(
+      Date.now() + 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
+    ).toISOString(), // Day after tomorrow + 1 hour
+    status: "scheduled",
+  },
+  {
+    id: "3",
+    organizerId: "user-1",
+    participants: ["user-1", "user-2", "user-5"],
+    title: "Weekly Planning",
+    description: "Weekly team planning and goal setting",
+    startTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Next week
+    endTime: new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
+    ).toISOString(), // Next week + 1 hour
+    status: "scheduled",
+  },
+];
+
 type MeetingState = {
   meetings: Meeting[];
   selectedMeeting: Meeting | null;
@@ -24,67 +64,58 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   fetchMeetings: async () => {
     set({ loading: true, error: null });
     try {
-      // For now, we'll use mock data since the backend endpoints might not be fully implemented
-      const mockMeetings: Meeting[] = [
-        {
-          id: "1",
-          organizerId: "user-1",
-          participants: ["Sarah Johnson", "Mike Davis", "You"],
-          title: "Q4 Budget Review Meeting",
-          description: "Quarterly budget review and resource allocation discussion",
-          startTime: "2024-01-16T14:00:00Z",
-          endTime: "2024-01-16T15:30:00Z",
-          status: "scheduled",
-        },
-        {
-          id: "2",
-          organizerId: "user-1",
-          participants: ["Acme Corp Team", "You"],
-          title: "Client Presentation - Acme Corp",
-          description: "Presentation of Q4 results and Q1 plans",
-          startTime: "2024-01-17T15:00:00Z",
-          endTime: "2024-01-17T16:00:00Z",
-          status: "scheduled",
-        },
-        {
-          id: "3",
-          organizerId: "user-1",
-          participants: ["Marketing Team", "You"],
-          title: "Follow up: Marketing Campaign",
-          description: "Review campaign performance and discuss next steps",
-          startTime: "2024-01-18T10:00:00Z",
-          endTime: "2024-01-18T10:30:00Z",
-          status: "pending",
-        },
-      ];
-      set({ meetings: mockMeetings, error: null });
+      const res = await axiosInstance.get("/meetings");
+      console.log(res.data);
+      const meetingsData = Array.isArray(res.data.meetings)
+        ? res.data.meetings
+        : [];
+      set({ meetings: meetingsData, error: null, loading: false });
     } catch (err: any) {
-      set({ error: err.response?.data?.detail || "Failed to fetch meetings" });
-    } finally {
-      set({ loading: false });
+      console.error("Failed to fetch meetings:", err);
+      // In development, fall back to mock data if API fails
+      set({
+        error: "Using mock data (API unavailable)",
+        meetings: mockMeetings,
+        loading: false,
+      });
     }
   },
 
   createMeeting: async (data: Partial<Meeting>) => {
     set({ loading: true, error: null });
     try {
-      // For now, we'll add to local state since the backend endpoint might not be implemented
-      const newMeeting: Meeting = {
+      const res = await axiosInstance.post("/meetings", data);
+      const newMeeting = res.data;
+
+      // Ensure the new meeting has all required fields
+      if (newMeeting && newMeeting.id) {
+        set((state) => ({
+          meetings: [...state.meetings, newMeeting],
+          error: null,
+        }));
+      } else {
+        throw new Error("Invalid meeting data received");
+      }
+    } catch (err: any) {
+      console.error("Failed to create meeting:", err);
+
+      // In development, create mock meeting if API fails
+      const mockMeeting: Meeting = {
         id: Date.now().toString(),
         organizerId: "user-1",
         participants: data.participants || [],
         title: data.title || "New Meeting",
         description: data.description || "",
         startTime: data.startTime || new Date().toISOString(),
-        endTime: data.endTime || new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-        status: "pending",
+        endTime:
+          data.endTime || new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        status: "scheduled",
       };
+
       set((state) => ({
-        meetings: [...state.meetings, newMeeting],
-        error: null,
+        meetings: [...state.meetings, mockMeeting],
+        error: "Meeting created locally (API unavailable)",
       }));
-    } catch (err: any) {
-      set({ error: err.response?.data?.detail || "Failed to create meeting" });
     } finally {
       set({ loading: false });
     }
@@ -93,15 +124,17 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   getMeeting: async (meetingId: string) => {
     set({ loading: true, error: null });
     try {
-      // For now, we'll find the meeting in local state
-      const meeting = get().meetings.find(m => m.id === meetingId);
-      if (meeting) {
-        set({ selectedMeeting: meeting, error: null });
+      const res = await axiosInstance.get(`/meetings/${meetingId}`);
+      set({ selectedMeeting: res.data, error: null });
+    } catch (err: any) {
+      console.error("Failed to fetch meeting:", err);
+      // Try to find meeting in local state
+      const localMeeting = get().meetings.find((m) => m.id === meetingId);
+      if (localMeeting) {
+        set({ selectedMeeting: localMeeting, error: null });
       } else {
         set({ error: "Meeting not found" });
       }
-    } catch (err: any) {
-      set({ error: err.response?.data?.detail || "Failed to fetch meeting" });
     } finally {
       set({ loading: false });
     }
@@ -110,7 +143,23 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   updateMeeting: async (meetingId: string, data: Partial<Meeting>) => {
     set({ loading: true, error: null });
     try {
-      // For now, we'll update local state
+      const res = await axiosInstance.put(`/meetings/${meetingId}`, data);
+      const updatedMeeting = res.data;
+
+      set((state) => ({
+        meetings: state.meetings.map((meeting) =>
+          meeting.id === meetingId ? { ...meeting, ...updatedMeeting } : meeting
+        ),
+        selectedMeeting:
+          state.selectedMeeting?.id === meetingId
+            ? updatedMeeting
+            : state.selectedMeeting,
+        error: null,
+      }));
+    } catch (err: any) {
+      console.error("Failed to update meeting:", err);
+
+      // In development, update locally if API fails
       set((state) => ({
         meetings: state.meetings.map((meeting) =>
           meeting.id === meetingId ? { ...meeting, ...data } : meeting
@@ -119,10 +168,8 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
           state.selectedMeeting?.id === meetingId
             ? { ...state.selectedMeeting, ...data }
             : state.selectedMeeting,
-        error: null,
+        error: "Meeting updated locally (API unavailable)",
       }));
-    } catch (err: any) {
-      set({ error: err.response?.data?.detail || "Failed to update meeting" });
     } finally {
       set({ loading: false });
     }
@@ -130,7 +177,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
 
   deleteMeeting: async (meetingId: string) => {
     try {
-      // For now, we'll update local state
+      await axiosInstance.delete(`/meetings/${meetingId}`);
       set((state) => ({
         meetings: state.meetings.filter((meeting) => meeting.id !== meetingId),
         selectedMeeting:
@@ -139,7 +186,17 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
             : state.selectedMeeting,
       }));
     } catch (err: any) {
-      set({ error: err.response?.data?.detail || "Failed to delete meeting" });
+      console.error("Failed to delete meeting:", err);
+
+      // In development, delete locally if API fails
+      set((state) => ({
+        meetings: state.meetings.filter((meeting) => meeting.id !== meetingId),
+        selectedMeeting:
+          state.selectedMeeting?.id === meetingId
+            ? null
+            : state.selectedMeeting,
+        error: "Meeting deleted locally (API unavailable)",
+      }));
     }
   },
 
