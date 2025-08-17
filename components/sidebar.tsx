@@ -1,18 +1,32 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Inbox, PenTool, Bell, Settings, Zap, Calendar, X, User } from "lucide-react"
-import type { ViewType } from "./email-dashboard"
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Inbox,
+  PenTool,
+  Bell,
+  Settings,
+  Zap,
+  Calendar,
+  X,
+  User,
+} from "lucide-react";
+import type { ViewType } from "./email-dashboard";
 
 interface SidebarProps {
-  currentView: ViewType
-  onViewChange: (view: ViewType) => void
-  isMobile?: boolean
-  onCloseMobile?: () => void
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
+  isMobile?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMobile }: SidebarProps) {
+export function Sidebar({
+  currentView,
+  onViewChange,
+  isMobile = false,
+  onCloseMobile,
+}: SidebarProps) {
   const menuItems = [
     {
       id: "inbox" as ViewType,
@@ -29,14 +43,14 @@ export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMo
       shortcut: "Ctrl+2",
       description: "Compose a new email",
     },
-    {
-      id: "reminders" as ViewType,
-      label: "Reminders",
-      icon: Bell,
-      count: 3,
-      shortcut: "Ctrl+3",
-      description: "View email reminders and follow-ups",
-    },
+    // {
+    //   id: "reminders" as ViewType,
+    //   label: "Reminders",
+    //   icon: Bell,
+    //   count: 3,
+    //   shortcut: "Ctrl+3",
+    //   description: "View email reminders and follow-ups",
+    // },
     {
       id: "calendar" as ViewType,
       label: "Calendar",
@@ -59,14 +73,14 @@ export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMo
       shortcut: "Ctrl+6",
       description: "Manage your profile and account settings",
     },
-  ]
+  ];
 
   const handleItemClick = (viewType: ViewType) => {
-    onViewChange(viewType)
+    onViewChange(viewType);
     if (isMobile && onCloseMobile) {
-      onCloseMobile()
+      onCloseMobile();
     }
-  }
+  };
 
   return (
     <aside
@@ -129,7 +143,11 @@ export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMo
                   }}
                   aria-current={currentView === item.id ? "page" : undefined}
                   aria-describedby={`${item.id}-description`}
-                  title={isMobile ? undefined : `${item.description} (${item.shortcut})`}
+                  title={
+                    isMobile
+                      ? undefined
+                      : `${item.description} (${item.shortcut})`
+                  }
                 >
                   {currentView === item.id && (
                     <div
@@ -139,11 +157,15 @@ export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMo
                   )}
 
                   <item.icon
-                    className={`${isMobile ? "w-5 h-5" : "w-4 h-4"} transition-all duration-200 group-hover:scale-110`}
+                    className={`${
+                      isMobile ? "w-5 h-5" : "w-4 h-4"
+                    } transition-all duration-200 group-hover:scale-110`}
                     aria-hidden="true"
                   />
 
-                  <span className="flex-1 text-left transition-all duration-200">{item.label}</span>
+                  <span className="flex-1 text-left transition-all duration-200">
+                    {item.label}
+                  </span>
 
                   {item.count && (
                     <Badge
@@ -167,7 +189,8 @@ export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMo
                 </Button>
 
                 <span id={`${item.id}-description`} className="sr-only">
-                  {item.description}. {!isMobile && `Keyboard shortcut: ${item.shortcut}`}
+                  {item.description}.{" "}
+                  {!isMobile && `Keyboard shortcut: ${item.shortcut}`}
                 </span>
               </li>
             ))}
@@ -176,7 +199,9 @@ export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMo
 
         {!isMobile && (
           <div className="mt-8 p-3 bg-sidebar-accent rounded-lg">
-            <h3 className="text-sm font-medium text-sidebar-accent-foreground mb-2">Keyboard Shortcuts</h3>
+            <h3 className="text-sm font-medium text-sidebar-accent-foreground mb-2">
+              Keyboard Shortcuts
+            </h3>
             <div className="text-xs text-sidebar-accent-foreground/70 space-y-1">
               <div>Ctrl+1-6: Navigate sections</div>
               <div>Escape: Go back</div>
@@ -186,5 +211,5 @@ export function Sidebar({ currentView, onViewChange, isMobile = false, onCloseMo
         )}
       </div>
     </aside>
-  )
+  );
 }

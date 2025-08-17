@@ -11,7 +11,7 @@ export type User = {
 export type Email = {
   id: string;
   from: string;
-  to: string[];
+  to_users: string[];
   subject: string;
   body: string;
   threadId: string;
@@ -24,7 +24,7 @@ export type Email = {
 export type Thread = {
   id: string;
   participants: string[];
-  emails: string[];
+  emails: Email[];
   lastUpdated: string;
 };
 

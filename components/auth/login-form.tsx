@@ -40,7 +40,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccess("");
-    console.log("Form submitted with:", formData);
 
     try {
       // Client-side validation
@@ -52,9 +51,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         throw new Error("Password is required");
       }
 
-      console.log("Calling login function from store...");
       await login(formData.email, formData.password);
-      console.log("Login function completed");
       setSuccess("Login successful! Redirecting...");
 
       if (onSuccess && user) {
@@ -101,69 +98,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Test button for debugging */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              console.log("Current store state:", useAuthStore.getState());
-              console.log("Testing login function...");
-              login("test@example.com", "password");
-            }}
-            className="w-full"
-          >
-            Test Store (Debug)
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={async () => {
-              console.log("Testing axios directly...");
-              try {
-                const response = await fetch(
-                  "http://localhost:8000/api/v1/auth/login",
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      email: "test@example.com",
-                      password: "password",
-                    }),
-                  }
-                );
-                console.log("Fetch response:", response);
-                const data = await response.json();
-                console.log("Fetch data:", data);
-              } catch (err) {
-                console.error("Fetch error:", err);
-              }
-            }}
-            className="w-full"
-          >
-            Test Axios (Debug)
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              console.log("localStorage contents:");
-              console.log("token:", localStorage.getItem("token"));
-              console.log("user:", localStorage.getItem("user"));
-              console.log(
-                "auth-storage:",
-                localStorage.getItem("auth-storage")
-              );
-              console.log("All localStorage keys:", Object.keys(localStorage));
-            }}
-            className="w-full"
-          >
-            Check localStorage (Debug)
-          </Button>
-
           <div className="space-y-2">
             <label
               htmlFor="email"

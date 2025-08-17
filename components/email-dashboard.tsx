@@ -1,86 +1,96 @@
-"use client"
+"use client";
 
-import { useState, useCallback, useMemo } from "react"
-import { InboxView } from "./inbox-view"
-import { ThreadView } from "./thread-view"
-import { ComposeView } from "./compose-view"
-import { RemindersView } from "./reminders-view"
-import { SettingsView } from "./settings-view"
-import { Sidebar } from "./sidebar"
-import { CalendarView } from "./calendar-view"
-import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
-import { useMobile } from "@/hooks/use-mobile"
-import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation"
+import { useState, useCallback, useMemo } from "react";
+import { InboxView } from "./inbox-view";
+import { ThreadView } from "./thread-view";
+import { ComposeView } from "./compose-view";
+// import { RemindersView } from "./reminders-view";
+import { SettingsView } from "./settings-view";
+import { Sidebar } from "./sidebar";
+import { CalendarView } from "./calendar-view";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { useMobile } from "@/hooks/use-mobile";
+import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
+import { ProfileView } from "./profile-view";
 
-export type ViewType = "inbox" | "thread" | "compose" | "reminders" | "settings" | "calendar"
+export type ViewType =
+  | "inbox"
+  | "thread"
+  | "compose"
+  // | "reminders"
+  | "settings"
+  | "calendar"
+  | "profile";
 
 export function EmailDashboard() {
-  const [currentView, setCurrentView] = useState<ViewType>("inbox")
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [currentView, setCurrentView] = useState<ViewType>("inbox");
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const { isMobile } = useMobile()
+  const { isMobile } = useMobile();
 
   const handleViewChange = useCallback(
     (view: ViewType, threadId?: string) => {
-      setIsTransitioning(true)
+      setIsTransitioning(true);
       if (isMobile) {
-        setIsMobileSidebarOpen(false)
+        setIsMobileSidebarOpen(false);
       }
 
       // Use requestAnimationFrame for smoother transitions
       requestAnimationFrame(() => {
         setTimeout(() => {
-          setCurrentView(view)
+          setCurrentView(view);
           if (threadId) {
-            setSelectedThreadId(threadId)
+            setSelectedThreadId(threadId);
           }
-          setIsTransitioning(false)
-        }, 150)
-      })
+          setIsTransitioning(false);
+        }, 150);
+      });
     },
-    [isMobile],
-  )
+    [isMobile]
+  );
 
   useKeyboardNavigation({
     shortcuts: {
       "1": () => handleViewChange("inbox"),
       "2": () => handleViewChange("compose"),
-      "3": () => handleViewChange("reminders"),
+      // "3": () => handleViewChange("reminders"),
       "4": () => handleViewChange("calendar"),
       "5": () => handleViewChange("settings"),
+      "6": () => handleViewChange("profile"),
     },
     onEscape: () => {
       if (isMobileSidebarOpen) {
-        setIsMobileSidebarOpen(false)
+        setIsMobileSidebarOpen(false);
       } else if (currentView === "thread") {
-        handleViewChange("inbox")
+        handleViewChange("inbox");
       }
     },
     enabled: true,
-  })
+  });
 
   const viewTitle = useMemo(() => {
     const titles = {
       inbox: "Inbox - Email Management",
       thread: "Email Thread View",
       compose: "Compose New Email",
-      reminders: "Email Reminders",
+      // reminders: "Email Reminders",
       settings: "Application Settings",
       calendar: "Calendar Management",
-    }
-    return titles[currentView]
-  }, [currentView])
+      profile: "Profile Management",
+    };
+    return titles[currentView];
+  }, [currentView]);
 
   const handleCloseMobileSidebar = useCallback(() => {
-    setIsMobileSidebarOpen(false)
-  }, [])
+    setIsMobileSidebarOpen(false);
+  }, []);
 
   const handleOpenMobileSidebar = useCallback(() => {
-    setIsMobileSidebarOpen(true)
-  }, [])
+    setIsMobileSidebarOpen(true);
+  }, []);
 
   return (
     <div className="flex h-screen bg-background">
@@ -105,7 +115,11 @@ export function EmailDashboard() {
         className={`
           ${isMobile ? "fixed inset-y-0 left-0 z-50" : "relative"}
           transform transition-transform duration-300 ease-out
-          ${isMobile && !isMobileSidebarOpen ? "-translate-x-full" : "translate-x-0"}
+          ${
+            isMobile && !isMobileSidebarOpen
+              ? "-translate-x-full"
+              : "translate-x-0"
+          }
           md:translate-x-0
         `}
       >
@@ -163,17 +177,29 @@ export function EmailDashboard() {
         >
           <div
             className={`absolute inset-0 transition-all duration-300 ease-out transform gpu-accelerated ${
-              isTransitioning ? "opacity-0 translate-x-2" : "opacity-100 translate-x-0"
+              isTransitioning
+                ? "opacity-0 translate-x-2"
+                : "opacity-100 translate-x-0"
             }`}
           >
-            {currentView === "inbox" && <InboxView onThreadSelect={(id) => handleViewChange("thread", id)} />}
-            {currentView === "thread" && (
-              <ThreadView threadId={selectedThreadId} onBack={() => handleViewChange("inbox")} />
+            {currentView === "inbox" && (
+              <InboxView
+                onThreadSelect={(id) => handleViewChange("thread", id)}
+              />
             )}
-            {currentView === "compose" && <ComposeView onBack={() => handleViewChange("inbox")} />}
-            {currentView === "reminders" && <RemindersView />}
+            {currentView === "thread" && (
+              <ThreadView
+                threadId={selectedThreadId}
+                onBack={() => handleViewChange("inbox")}
+              />
+            )}
+            {currentView === "compose" && (
+              <ComposeView onBack={() => handleViewChange("inbox")} />
+            )}
+            {/* {currentView === "reminders" && <RemindersView />} */}
             {currentView === "settings" && <SettingsView />}
             {currentView === "calendar" && <CalendarView />}
+            {currentView === "profile" && <ProfileView />}
           </div>
 
           {isTransitioning && (
@@ -189,5 +215,5 @@ export function EmailDashboard() {
         </main>
       </div>
     </div>
-  )
+  );
 }

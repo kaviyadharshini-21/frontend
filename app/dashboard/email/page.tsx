@@ -11,16 +11,9 @@ export default function EmailDashboardPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    console.log("Dashboard auth check:", {
-      loading,
-      user: !!user,
-      isRedirecting,
-    });
-
     // Add a small delay to allow auth state to settle after login
     const timer = setTimeout(() => {
       if (!loading && !user && !isRedirecting) {
-        console.log("No user found, redirecting to login");
         setIsRedirecting(true);
         router.push("/login");
       }

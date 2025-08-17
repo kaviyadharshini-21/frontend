@@ -43,6 +43,11 @@ export function ComposeView({ onBack }: ComposeViewProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState("");
   const [aiError, setAiError] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">(
+    "idle"
+  );
+  const [sendError, setSendError] = useState("");
 
   const handleAIAssist = async () => {
     if (!context.trim()) {
@@ -90,6 +95,100 @@ export function ComposeView({ onBack }: ComposeViewProps) {
     setAiGeneratedMessage("");
   };
 
+  const handleSendEmail = async () => {
+    if (!to.trim() || !subject.trim() || !message.trim()) {
+      setSendError(
+        "Please fill in all required fields (To, Subject, and Message)"
+      );
+      setSendStatus("error");
+      return;
+    }
+
+    // Parse multiple email addresses
+    const emailAddresses = to
+      .split(/[,;]/)
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+
+    if (emailAddresses.length === 0) {
+      setSendError("Please enter at least one valid email address");
+      setSendStatus("error");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = emailAddresses.filter(
+      (email) => !emailRegex.test(email)
+    );
+
+    if (invalidEmails.length > 0) {
+      setSendError(`Invalid email format: ${invalidEmails.join(", ")}`);
+      setSendStatus("error");
+      return;
+    }
+
+    setIsSending(true);
+    setSendError("");
+    setSendStatus("idle");
+
+    try {
+      const response = await axiosInstance.post("/emails/send-smtp", {
+        to_users: Array.isArray(emailAddresses)
+          ? emailAddresses
+          : [emailAddresses],
+        subject: subject.trim(),
+        body: message.trim(),
+      });
+
+      if (response.data.success) {
+        setSendStatus("success");
+        // Reset form after successful send
+        setTo("");
+        setSubject("");
+        setMessage("");
+        setContext("");
+        setShowAISuggestion(false);
+        setAiGeneratedMessage("");
+
+        // Show success message for 3 seconds
+        setTimeout(() => {
+          setSendStatus("idle");
+        }, 3000);
+      } else {
+        throw new Error("Failed to send email");
+      }
+    } catch (error: any) {
+      console.error("Send email failed:", error);
+
+      // Handle different types of API errors
+      let errorMessage = "Failed to send email";
+
+      if (error.response?.status === 422) {
+        // Unprocessable Entity - validation error
+        const validationErrors = error.response.data?.detail;
+        if (Array.isArray(validationErrors)) {
+          errorMessage = validationErrors
+            .map((err: any) => err.msg || err.message)
+            .join(", ");
+        } else if (typeof validationErrors === "string") {
+          errorMessage = validationErrors;
+        } else {
+          errorMessage = "Invalid email data. Please check your input.";
+        }
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setSendError(errorMessage);
+      setSendStatus("error");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col">
       <div className="border-b border-border p-4">
@@ -105,13 +204,48 @@ export function ComposeView({ onBack }: ComposeViewProps) {
               <Paperclip className="w-4 h-4 mr-2" />
               Attach
             </Button>
-            <Button size="sm">
-              <Send className="w-4 h-4 mr-2" />
-              Send
+            <Button
+              size="sm"
+              onClick={handleSendEmail}
+              disabled={
+                isSending || !to.trim() || !subject.trim() || !message.trim()
+              }
+              className="min-w-[80px]"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send
+                </>
+              )}
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Send Status Messages */}
+      {sendStatus === "success" && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg mx-4 mb-4">
+          <p className="text-sm text-green-700 flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            Email sent successfully!
+          </p>
+        </div>
+      )}
+
+      {sendStatus === "error" && sendError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg mx-4 mb-4">
+          <p className="text-sm text-red-700 flex items-center gap-2">
+            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+            {sendError}
+          </p>
+        </div>
+      )}
 
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
@@ -120,10 +254,14 @@ export function ComposeView({ onBack }: ComposeViewProps) {
             <div>
               <label className="text-sm font-medium mb-2 block">To</label>
               <Input
-                placeholder="Enter email addresses..."
+                placeholder="Enter email addresses (separate multiple with commas)..."
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                You can enter multiple email addresses separated by commas or
+                semicolons
+              </p>
             </div>
 
             <div>
@@ -242,9 +380,10 @@ export function ComposeView({ onBack }: ComposeViewProps) {
               </div>
 
               <div className="bg-background p-4 rounded-md border mb-4">
-                <pre className="whitespace-pre-wrap text-sm font-sans">
-                  {aiGeneratedMessage}
-                </pre>
+                <div
+                  className="prose prose-sm max-w-none text-sm font-sans"
+                  dangerouslySetInnerHTML={{ __html: aiGeneratedMessage }}
+                />
               </div>
 
               <div className="flex items-center gap-2">

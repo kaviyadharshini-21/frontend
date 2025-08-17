@@ -65,7 +65,6 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const res = await axiosInstance.get("/meetings");
-      console.log(res.data);
       const meetingsData = Array.isArray(res.data.meetings)
         ? res.data.meetings
         : [];

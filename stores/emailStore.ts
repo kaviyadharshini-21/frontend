@@ -42,7 +42,6 @@ export const useEmailStore = create<EmailState>((set, get) => ({
       );
       set({ inbox: res.data.emails });
     } catch (err: any) {
-      console.log(err);
       set({ error: err.response?.data?.detail || "Failed to fetch inbox" });
     } finally {
       set({ loading: false, isFetching: false });
@@ -53,17 +52,14 @@ export const useEmailStore = create<EmailState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       // For now, we'll create a mock thread response
-      const mockThread: Thread = {
+      const emails = get().inbox.find((email) => email.id === threadId);
+      const thread: Thread = {
         id: threadId,
-        participants: [
-          "sarah@company.com",
-          "user@company.com",
-          "mike@company.com",
-        ],
-        emails: ["1", "2"],
-        lastUpdated: "2024-01-15T10:00:00Z",
+        emails: [emails!],
+        participants: emails?.to_users ?? [],
+        lastUpdated: emails?.sentAt || "",
       };
-      set({ selectedThread: mockThread, error: null });
+      set({ selectedThread: thread, error: null });
     } catch (err: any) {
       set({ error: err.response?.data?.detail || "Failed to fetch thread" });
     } finally {

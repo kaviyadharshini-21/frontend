@@ -297,7 +297,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
                   className={`p-4 hover:bg-muted/50 cursor-pointer focus:outline-none focus:bg-muted/50 ${
                     focusedEmailIndex === index ? "bg-muted/50" : ""
                   }`}
-                  onClick={() => onThreadSelect(email.threadId)}
+                  onClick={() => onThreadSelect(email.id)}
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">

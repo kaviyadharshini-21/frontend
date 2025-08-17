@@ -1,127 +1,128 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Avatar } from "@/components/ui/avatar"
-import { useAuthStore } from "@/stores/authStore"
-import { User, Edit3, Save, X, Mail, Calendar, Settings } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/ui/avatar";
+import { useAuthStore } from "@/stores/authStore";
+import { User, Edit3, Save, X, Mail, Calendar, Settings } from "lucide-react";
+import axiosInstance from "@/lib/axiosInstance";
 
 interface UserProfile {
-  id: string
-  fullName: string
-  email: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  fullName: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function ProfileView() {
-  const { user, token } = useAuthStore()
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const { user, token } = useAuthStore();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [editData, setEditData] = useState({
     fullName: "",
-  })
+  });
 
   // Fetch profile data on component mount
   useEffect(() => {
     const fetchProfile = async () => {
       if (!token) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
       try {
-        const response = await fetch('/api/profile', {
+        const response = await axiosInstance.get("/auth/profile", {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
-        })
+        });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch profile')
+        if (!response.data) {
+          throw new Error("Failed to fetch profile");
         }
 
-        const profileData = await response.json()
-        setProfile(profileData)
-        setEditData({ fullName: profileData.fullName })
+        const profileData = response.data;
+        setProfile(profileData);
+        setEditData({ fullName: profileData.fullName });
       } catch (err) {
-        setError('Failed to load profile data')
-        console.error('Profile fetch error:', err)
+        setError("Failed to load profile data");
+        console.error("Profile fetch error:", err);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchProfile()
-  }, [token])
+    fetchProfile();
+  }, [token]);
 
   const handleEdit = () => {
-    setIsEditing(true)
-    setError("")
-    setSuccess("")
-  }
+    setIsEditing(true);
+    setError("");
+    setSuccess("");
+  };
 
   const handleCancel = () => {
-    setIsEditing(false)
-    setEditData({ fullName: profile?.fullName || "" })
-    setError("")
-    setSuccess("")
-  }
+    setIsEditing(false);
+    setEditData({ fullName: profile?.fullName || "" });
+    setError("");
+    setSuccess("");
+  };
 
   const handleSave = async () => {
     if (!editData.fullName.trim()) {
-      setError("Full name is required")
-      return
+      setError("Full name is required");
+      return;
     }
 
-    setIsSaving(true)
-    setError("")
+    setIsSaving(true);
+    setError("");
 
     try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
+      const response = await fetch("/api/profile", {
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(editData),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update profile')
+        throw new Error(data.error || "Failed to update profile");
       }
 
       // Update profile state
-      setProfile(data.user)
+      setProfile(data.user);
 
-      setSuccess("Profile updated successfully!")
-      setIsEditing(false)
-      
+      setSuccess("Profile updated successfully!");
+      setIsEditing(false);
+
       // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(""), 3000)
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update profile")
+      setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   if (isLoading) {
     return (
@@ -132,7 +133,7 @@ export function ProfileView() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!profile) {
@@ -140,11 +141,13 @@ export function ProfileView() {
       <div className="flex-1 p-6">
         <div className="max-w-2xl mx-auto">
           <Card className="p-6 text-center">
-            <p className="text-muted-foreground">Failed to load profile data.</p>
+            <p className="text-muted-foreground">
+              Failed to load profile data.
+            </p>
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -152,7 +155,9 @@ export function ProfileView() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Profile Settings</h2>
-          <p className="text-muted-foreground">Manage your account information and preferences</p>
+          <p className="text-muted-foreground">
+            Manage your account information and preferences
+          </p>
         </div>
 
         {error && (
@@ -188,8 +193,8 @@ export function ProfileView() {
               </Button>
             ) : (
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleSave} 
+                <Button
+                  onClick={handleSave}
                   disabled={isSaving}
                   className="gap-2"
                   size="sm"
@@ -197,8 +202,8 @@ export function ProfileView() {
                   <Save className="w-4 h-4" />
                   {isSaving ? "Saving..." : "Save"}
                 </Button>
-                <Button 
-                  onClick={handleCancel} 
+                <Button
+                  onClick={handleCancel}
                   variant="outline"
                   size="sm"
                   className="gap-2"
@@ -212,14 +217,19 @@ export function ProfileView() {
 
           <div className="space-y-6">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium mb-2">
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium mb-2"
+              >
                 Full Name
               </label>
               {isEditing ? (
                 <Input
                   id="fullName"
                   value={editData.fullName}
-                  onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setEditData({ ...editData, fullName: e.target.value })
+                  }
                   placeholder="Enter your full name"
                   className="max-w-md"
                 />
@@ -237,7 +247,8 @@ export function ProfileView() {
                 <span>{profile.email}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Email address cannot be changed. Contact support if you need assistance.
+                Email address cannot be changed. Contact support if you need
+                assistance.
               </p>
             </div>
 
@@ -249,14 +260,18 @@ export function ProfileView() {
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <span>Member since</span>
                   </div>
-                  <span className="text-muted-foreground">{formatDate(profile.createdAt)}</span>
+                  <span className="text-muted-foreground">
+                    {formatDate(profile.createdAt)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-muted-foreground" />
                     <span>Last updated</span>
                   </div>
-                  <span className="text-muted-foreground">{formatDate(profile.updatedAt)}</span>
+                  <span className="text-muted-foreground">
+                    {formatDate(profile.updatedAt)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -283,8 +298,5 @@ export function ProfileView() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-
-
-

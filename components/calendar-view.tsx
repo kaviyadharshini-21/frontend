@@ -183,17 +183,6 @@ export function CalendarView() {
     year: "numeric",
   });
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Calendar View - Store State:", {
-      meetings,
-      safeMeetings: safeMeetings.length,
-      upcomingMeetings: upcomingMeetings.length,
-      loading,
-      error,
-    });
-  }, [meetings, safeMeetings.length, upcomingMeetings.length, loading, error]);
-
   return (
     <div className="flex-1 p-6">
       <div className="max-w-7xl mx-auto">

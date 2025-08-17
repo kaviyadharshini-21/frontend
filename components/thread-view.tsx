@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   Reply,
@@ -16,22 +16,22 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-} from "lucide-react"
-import { useEmailStore } from "@/stores/emailStore"
+} from "lucide-react";
+import { useEmailStore } from "@/stores/emailStore";
 
 interface ThreadViewProps {
-  threadId: string | null
-  onBack: () => void
+  threadId: string | null;
+  onBack: () => void;
 }
 
 export function ThreadView({ threadId, onBack }: ThreadViewProps) {
-  const { selectedThread, loading, error, fetchThread } = useEmailStore()
+  const { selectedThread, loading, error, fetchThread } = useEmailStore();
 
   useEffect(() => {
     if (threadId) {
-      fetchThread(threadId)
+      fetchThread(threadId);
     }
-  }, [threadId, fetchThread])
+  }, [threadId, fetchThread]);
 
   const aiSummary = {
     keyPoints: [
@@ -41,16 +41,19 @@ export function ThreadView({ threadId, onBack }: ThreadViewProps) {
       "Proposed time: Tuesday at 2 PM",
     ],
     decisions: ["Meeting scheduled for Tuesday at 2 PM"],
-    actionItems: ["Prepare budget analysis (assigned to you)", "Prepare spending reports (assigned to you)"],
+    actionItems: [
+      "Prepare budget analysis (assigned to you)",
+      "Prepare spending reports (assigned to you)",
+    ],
     questions: ["Are all participants available for Tuesday 2 PM?"],
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -58,10 +61,12 @@ export function ThreadView({ threadId, onBack }: ThreadViewProps) {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={() => threadId && fetchThread(threadId)}>Retry</Button>
+          <Button onClick={() => threadId && fetchThread(threadId)}>
+            Retry
+          </Button>
         </div>
       </div>
-    )
+    );
   }
 
   if (!selectedThread) {
@@ -69,7 +74,7 @@ export function ThreadView({ threadId, onBack }: ThreadViewProps) {
       <div className="flex-1 flex items-center justify-center">
         <p className="text-muted-foreground">Select a thread to view</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -100,45 +105,18 @@ export function ThreadView({ threadId, onBack }: ThreadViewProps) {
           </div>
         </div>
 
-        <h1 className="text-xl font-semibold mb-2">{selectedThread.subject || "Thread Subject"}</h1>
+        <h1 className="text-xl font-semibold mb-2">
+          {selectedThread.emails[0].subject || "Thread Subject"}
+        </h1>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <User className="w-4 h-4" />
-          <span>{selectedThread.participants?.join(", ") || "Participants"}</span>
+          <span>
+            {selectedThread.participants?.join(", ") || "Participants"}
+          </span>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        {selectedThread.hasMeetingRequest && (
-          <Card className="p-4 mb-6 border-orange-200 bg-orange-50">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-full">
-                <Calendar className="w-5 h-5 text-orange-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-orange-800">Meeting Request Detected</span>
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                    AI Detected
-                  </Badge>
-                </div>
-                <p className="text-sm text-orange-700 mb-3">
-                  AI found a meeting request for "Q4 Budget Review" on Tuesday at 2 PM with 3 participants.
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    Schedule Meeting
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Clock className="w-3 h-3 mr-1" />
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
         {/* AI Summary */}
         <Card className="p-6 mb-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -181,7 +159,7 @@ export function ThreadView({ threadId, onBack }: ThreadViewProps) {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">{email.sender}</span>
+                    <span className="font-medium">{email.from}</span>
                     <span className="text-sm text-muted-foreground">
                       <Clock className="w-3 h-3 inline mr-1" />
                       {email.sentAt}
@@ -192,14 +170,19 @@ export function ThreadView({ threadId, onBack }: ThreadViewProps) {
               </div>
 
               <div className="prose prose-sm max-w-none">
-                <p className="whitespace-pre-wrap">{email.body}</p>
+                <p
+                  className="whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: email.body }}
+                />
               </div>
 
-              {index < (selectedThread.emails?.length || 0) - 1 && <Separator className="my-4" />}
+              {index < (selectedThread.emails?.length || 0) - 1 && (
+                <Separator className="my-4" />
+              )}
             </Card>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }
