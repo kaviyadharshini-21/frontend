@@ -284,8 +284,7 @@ export function InboxView({ onThreadSelect }: InboxViewProps) {
         ) : (
           <div className="divide-y divide-border">
             {filteredEmails.map((email, index) => {
-              const category = getEmailCategory(email);
-              const urgency = getEmailUrgency(email);
+              const category = email.category || "fyi";
               const CategoryIcon = getCategoryIcon(category);
               return (
                 <div

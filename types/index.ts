@@ -19,6 +19,7 @@ export type Email = {
   isDeleted: boolean;
   sentAt: string;
   attachments: string[];
+  category: string;
 };
 
 export type Thread = {
